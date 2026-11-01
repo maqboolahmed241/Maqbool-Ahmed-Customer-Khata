@@ -28,7 +28,9 @@ public class MainActivity extends Activity {
  }
  private void saveBackupFile(String name,String json){
  try{if(backupTree==null){web.evaluateJavascript("onBackupSaved(false,'پہلے بیک اپ فولڈر منتخب کریں')",null);return;}
- Uri file=DocumentsContract.createDocument(getContentResolver(),backupTree,"application/json",name);
+ String treeDocumentId=DocumentsContract.getTreeDocumentId(backupTree);
+ Uri folderDocument=DocumentsContract.buildDocumentUriUsingTree(backupTree,treeDocumentId);
+ Uri file=DocumentsContract.createDocument(getContentResolver(),folderDocument,"application/json",name);
  if(file==null)throw new Exception("فائل نہیں بن سکی");
  try(OutputStream out=getContentResolver().openOutputStream(file)){if(out==null)throw new Exception("فائل نہیں کھل سکی");out.write(json.getBytes(StandardCharsets.UTF_8));}
  web.evaluateJavascript("onBackupSaved(true,'')",null);
