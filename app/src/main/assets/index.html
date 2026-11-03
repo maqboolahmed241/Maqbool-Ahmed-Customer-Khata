@@ -110,9 +110,12 @@ function shareCustomerBill(){
  let c=db.customers.find(x=>x.id===currentCustomer);if(!c)return;
  let tx=db.transactions.filter(t=>t.customerId===c.id).sort((a,b)=>a.date.localeCompare(b.date));
  let sales=tx.filter(t=>t.type==='sale'),payments=tx.filter(t=>t.type==='payment'),returns=tx.filter(t=>t.type==='return');
- let total=sales.reduce((s,t)=>s+t.amount,0),paid=payments.reduce((s,t)=>s+t.amount,0),ret=returns.reduce((s,t)=>s+t.amount,0);
+ let total=sales.reduce((s,t)=>s+t.amount,0),paid=payments.reduce((s,t)=>s+t.amount,0),ret=returns.reduce((s,t)=>s+t.amount,0),balance=due(c.id);
  let lines=sales.map((t,i)=>`${i+1}. ${t.note||'آئٹم'} — ${money(t.amount)} (${t.date})`);
- let textMsg=`${db.settings.shopName}\nکسٹمر بل / کھاتہ\nکسٹمر: ${c.name}\nموبائل: ${c.phone||'درج نہیں'}\n\nخریدے گئے آئٹمز:\n${lines.length?lines.join('\n'):'ابھی کوئی آئٹم درج نہیں'}\n\nکل بل: ${money(total)}\nوصول شدہ رقم: ${money(paid)}\nواپسی/رعایت: ${money(ret)}\nبقایا رقم: ${money(due(c.id))}\n\nتاریخ: ${today()}`;
+ let textMsg=`${db.settings.shopName}\nکسٹمر بل / کھاتہ\nکسٹمر: ${c.name}\nموبائل: ${c.phone||'درج نہیں'}\n\nخریدے گئے آئٹمز:\n${lines.length?lines.join('\n'):'ابھی کوئی آئٹم درج نہیں'}\n\nکل بل: ${money(total)}\nوصول شدہ رقم: ${money(paid)}\nواپسی/رعایت: ${money(ret)}\nبقایا رقم: ${money(balance)}\n\nتاریخ: ${today()}`;
+ if(balance>0){
+  textMsg+=`\n\n━━━━━━━━━━━━━━\n🌹 السلام علیکم ${c.name} صاحب!\n\nآپ نے ہم سے جو سامان ادھار حاصل فرمایا تھا، اس کی تفصیل اور بقایا رقم اوپر درج ہے۔\n\nآپ سے مؤدبانہ گزارش ہے کہ براہِ کرم اپنی سہولت کے مطابق بقایا رقم جلد از جلد ادا فرما دیں تاکہ ہمارا حساب مکمل ہو سکے۔\n\nآپ کے تعاون اور اعتماد کا بے حد شکریہ۔\n\nمنجانب: ${db.settings.shopName}\n━━━━━━━━━━━━━━`;
+ }
  shareTextToApps('کسٹمر بل',textMsg);
 }
 function shareReport(){let from=$('fromDate').value,to=$('toDate').value;let a=db.transactions.filter(t=>t.date>=from&&t.date<=to);let sales=a.filter(t=>t.type==='sale');let itemLines=sales.map((t,i)=>{let c=db.customers.find(x=>x.id===t.customerId);return `${i+1}. ${c?.name||'کسٹمر'} — ${t.note||'آئٹم'} — ${money(t.amount)} (${t.date})`});let textMsg=`${db.settings.shopName}\nرپورٹ: ${from} تا ${to}\nفروخت: ${$('reportSales').textContent}\nوصولی: ${$('reportPaid').textContent}\n\nآئٹمز / بل کی تفصیل:\n${itemLines.length?itemLines.join('\n'):'کوئی فروخت نہیں'}\n\nریکارڈ: ${a.length}`;shareTextToApps('کھاتہ رپورٹ',textMsg);}
