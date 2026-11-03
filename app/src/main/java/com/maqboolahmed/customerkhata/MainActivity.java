@@ -21,6 +21,8 @@ public class MainActivity extends Activity {
  SharedPreferences prefs=getSharedPreferences("khata_backup",MODE_PRIVATE);String saved=prefs.getString("tree_uri",null);if(saved!=null)backupTree=Uri.parse(saved);
  web.addJavascriptInterface(new Object(){
  @JavascriptInterface public void shareText(String title,String text){runOnUiThread(()->{Intent send=new Intent(Intent.ACTION_SEND);send.setType("text/plain");send.putExtra(Intent.EXTRA_SUBJECT,title);send.putExtra(Intent.EXTRA_TEXT,text);startActivity(Intent.createChooser(send,"بل کہاں بھیجنا ہے؟"));});}
+ @JavascriptInterface public void openWhatsAppChat(String phone,String text){runOnUiThread(()->{try{String url="https://wa.me/"+phone+"?text="+Uri.encode(text);Intent intent=new Intent(Intent.ACTION_VIEW,Uri.parse(url));startActivity(intent);}catch(Exception e){web.evaluateJavascript("alert('WhatsApp نہیں کھل سکا۔')",null);}});}
+ @JavascriptInterface public void openSmsComposer(String phone,String text){runOnUiThread(()->{try{Intent intent=new Intent(Intent.ACTION_SENDTO,Uri.parse("smsto:"+phone));intent.putExtra("sms_body",text);startActivity(intent);}catch(Exception e){web.evaluateJavascript("alert('SMS ایپ نہیں کھل سکی۔')",null);}});}
  @JavascriptInterface public void selectBackupFolder(){runOnUiThread(()->{Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);startActivityForResult(i,PICK_FOLDER);});}
  @JavascriptInterface public void saveBackup(String name,String json){runOnUiThread(()->saveBackupFile(name,json));}
  },"AndroidBridge");
