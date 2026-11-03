@@ -47,7 +47,7 @@ hr{opacity:.7}
 <section id="addCustomer" class="page"><div class="card"><h2 id="customerFormTitle">نیا کسٹمر شامل کریں</h2><input type="hidden" id="editCustomerId"><div class="field"><label>کسٹمر کا نام *</label><input id="cName" placeholder="مثلاً علی رضا"></div><div class="field"><label>موبائل نمبر</label><input id="cPhone" type="tel" placeholder="03XXXXXXXXX" dir="ltr"></div><div class="field"><label>پتہ (اختیاری)</label><input id="cAddress" placeholder="کسٹمر کا پتہ"></div><button class="btn" onclick="saveCustomer()">کسٹمر محفوظ کریں</button></div></section>
 <section id="customerDetail" class="page"><div class="card"><div class="btnrow"><button class="btn alt" onclick="showPage('customers')">← فہرست</button><button class="btn alt" onclick="editCurrentCustomer()">✎ ترمیم</button></div><h2 id="detailName" style="margin-top:12px">کسٹمر</h2><div id="detailMeta" class="muted"></div><div class="stats"><div class="stat"><span>کل بل</span><b id="detailTotal">₨ 0</b></div><div class="stat"><span>بقایا</span><b id="detailDue" class="gold">₨ 0</b></div></div></div>
 <div class="card"><h2>نیا لین دین درج کریں</h2><div class="row"><div class="field"><label>قسم</label><select id="txType"><option value="sale">فروخت / بل</option><option value="payment">ادائیگی وصول</option><option value="return">واپسی / رعایت</option></select></div><div class="field"><label>رقم (روپے) *</label><input id="txAmount" type="number" min="1" inputmode="decimal" placeholder="0"></div></div><div class="field"><label>تفصیل</label><input id="txNote" placeholder="مثلاً کپڑا، نقد ادائیگی"></div><button class="btn" onclick="addTransaction()">لین دین محفوظ کریں</button></div>
-<div class="card"><h2>کھاتے کی تفصیل</h2><div id="transactionList"></div><div class="btnrow no-print" style="margin-top:10px"><button class="btn alt" onclick="printCustomer()">کسٹمر کا بل پرنٹ کریں</button><button class="btn" onclick="shareCustomerBill()">بل WhatsApp پر شیئر کریں</button></div></div></section>
+<div class="card"><h2>کھاتے کی تفصیل</h2><div id="transactionList"></div><div class="btnrow no-print" style="margin-top:10px"><button class="btn alt" onclick="printCustomer()">کسٹمر کا بل پرنٹ کریں</button><button class="btn" onclick="sendCustomerBillWhatsApp()">📱 WhatsApp پر بل بھیجیں</button><button class="btn alt" onclick="sendCustomerBillSMS()">✉ SMS پر بل بھیجیں</button></div></div></section>
 <section id="sales" class="page"><div class="card"><h2>سامان کی فروخت / بل بنائیں</h2><div class="field"><label>کسٹمر منتخب کریں</label><select id="saleCustomer"></select></div><div class="field"><label>آئٹم / سامان</label><input id="itemName" placeholder="مثلاً چینی، کپڑا، آٹا"></div><div class="row"><div class="field"><label>مقدار</label><input id="itemQty" type="number" min="0.01" step="any" value="1" inputmode="decimal"></div><div class="field"><label>یونٹ کی قسم</label><select id="itemUnit"><option value="kg">کلوگرام (کلو)</option><option value="عدد">عدد / پیس</option><option value="سوٹ">سوٹ</option><option value="تھان">تھان</option><option value="جوڑا">جوڑا</option></select></div></div><div class="field"><label id="itemPriceLabel">فی کلو قیمت (روپے)</label><input id="itemPrice" type="number" min="0" step="any" value="0" inputmode="decimal"></div><div class="field"><label>ادا شدہ رقم</label><input id="salePaid" type="number" min="0" value="0" inputmode="decimal"></div><div class="notice">کل رقم خود حساب ہوگی۔ ادائیگی کل رقم سے زیادہ ہو تو بھی محفوظ کرنے سے پہلے تصدیق کریں۔</div><div class="stat"><span>بل کی کل رقم</span><b id="saleTotal" class="gold">₨ 0</b></div><button class="btn" onclick="saveSale()">بل محفوظ کریں</button></div><div class="card"><h2>آج کے بل</h2><div id="todayBillList"></div></div></section>
 <section id="report" class="page"><div class="card"><h2>رپورٹ اور تاریخ</h2><div class="row"><div class="field"><label>شروع کی تاریخ</label><input id="fromDate" type="date"></div><div class="field"><label>آخری تاریخ</label><input id="toDate" type="date"></div></div><button class="btn" onclick="renderReport()">رپورٹ دکھائیں</button><div class="stats"><div class="stat"><span>فروخت</span><b id="reportSales">₨ 0</b></div><div class="stat"><span>وصولی</span><b id="reportPaid">₨ 0</b></div></div><div class="tablewrap" id="reportTable"></div><div class="btnrow no-print" style="margin-top:12px"><button class="btn alt" onclick="window.print()">🖨 پرنٹ</button><button class="btn alt" onclick="shareReport()">شیئر رپورٹ</button></div></div></section>
 <section id="backup" class="page">
@@ -114,9 +114,33 @@ function shareCustomerBill(){
  let lines=sales.map((t,i)=>`${i+1}. ${t.note||'آئٹم'} — ${money(t.amount)} (${t.date})`);
  let textMsg=`${db.settings.shopName}\nکسٹمر بل / کھاتہ\nکسٹمر: ${c.name}\nموبائل: ${c.phone||'درج نہیں'}\n\nخریدے گئے آئٹمز:\n${lines.length?lines.join('\n'):'ابھی کوئی آئٹم درج نہیں'}\n\nکل بل: ${money(total)}\nوصول شدہ رقم: ${money(paid)}\nواپسی/رعایت: ${money(ret)}\nبقایا رقم: ${money(balance)}\n\nتاریخ: ${today()}`;
  if(balance>0){
-  textMsg+=`\n\n━━━━━━━━━━━━━━\n🌹 السلام علیکم ${c.name} صاحب!\n\nآپ نے ہم سے جو سامان ادھار حاصل فرمایا تھا، اس کی تفصیل اور بقایا رقم اوپر درج ہے۔\n\nآپ سے مؤدبانہ گزارش ہے کہ براہِ کرم اپنی سہولت کے مطابق بقایا رقم جلد از جلد ادا فرما دیں تاکہ ہمارا حساب مکمل ہو سکے۔\n\nآپ کے تعاون اور اعتماد کا بے حد شکریہ۔\n\nمنجانب: ${db.settings.shopName}\n━━━━━━━━━━━━━━`;
+  textMsg+=`\n\n━━━━━━━━━━━━━━\n🌹 السلام علیکم ${c.name} صاحب!\n\nآپ نے ہم سے جو سامان ادھار حاصل فرمایا تھا، اس کی تفصیل اور بقایا رقم اوپر درج ہے۔\n\nآپ سے گزارش ہے کہ براہِ کرم اپنا بقایا حساب جلد از جلد ادا کریں۔ ادائیگی میں مزید تاخیر سے گریز کریں تاکہ آپ کا کھاتہ بروقت صاف ہو سکے۔\n\nآپ کے فوری تعاون کے منتظر ہیں۔\n\nمنجانب: ${db.settings.shopName}\n━━━━━━━━━━━━━━`;
  }
- shareTextToApps('کسٹمر بل',textMsg);
+ return textMsg;
+}
+function normalizePakistanPhone(raw){
+ let digits=String(raw||'').replace(/[^0-9]/g,'');
+ if(digits.startsWith('0092'))digits=digits.slice(2);
+ if(digits.startsWith('0'))digits='92'+digits.slice(1);
+ else if(!digits.startsWith('92'))digits='92'+digits;
+ return /^92[0-9]{10}$/.test(digits)?digits:'';
+}
+function customerBillMessage(){return shareCustomerBill();}
+function sendCustomerBillWhatsApp(){
+ let c=db.customers.find(x=>x.id===currentCustomer);if(!c)return;
+ let phone=normalizePakistanPhone(c.phone);
+ if(!phone)return alert('اس کسٹمر کا درست موبائل نمبر درج کریں، پھر WhatsApp پر بل بھیج سکیں گے۔');
+ let msg=customerBillMessage();
+ if(window.AndroidBridge&&typeof AndroidBridge.openWhatsAppChat==='function'){AndroidBridge.openWhatsAppChat(phone,msg);return;}
+ window.location.href='https://wa.me/'+phone+'?text='+encodeURIComponent(msg);
+}
+function sendCustomerBillSMS(){
+ let c=db.customers.find(x=>x.id===currentCustomer);if(!c)return;
+ let phone=normalizePakistanPhone(c.phone);
+ if(!phone)return alert('اس کسٹمر کا درست موبائل نمبر درج کریں، پھر SMS بھیج سکیں گے۔');
+ let msg=customerBillMessage();
+ if(window.AndroidBridge&&typeof AndroidBridge.openSmsComposer==='function'){AndroidBridge.openSmsComposer(phone,msg);return;}
+ window.location.href='sms:'+phone+'?body='+encodeURIComponent(msg);
 }
 function shareReport(){let from=$('fromDate').value,to=$('toDate').value;let a=db.transactions.filter(t=>t.date>=from&&t.date<=to);let sales=a.filter(t=>t.type==='sale');let itemLines=sales.map((t,i)=>{let c=db.customers.find(x=>x.id===t.customerId);return `${i+1}. ${c?.name||'کسٹمر'} — ${t.note||'آئٹم'} — ${money(t.amount)} (${t.date})`});let textMsg=`${db.settings.shopName}\nرپورٹ: ${from} تا ${to}\nفروخت: ${$('reportSales').textContent}\nوصولی: ${$('reportPaid').textContent}\n\nآئٹمز / بل کی تفصیل:\n${itemLines.length?itemLines.join('\n'):'کوئی فروخت نہیں'}\n\nریکارڈ: ${a.length}`;shareTextToApps('کھاتہ رپورٹ',textMsg);}
 function shareTextToApps(title,textMsg){if(window.AndroidBridge&&typeof AndroidBridge.shareText==='function'){AndroidBridge.shareText(title,textMsg);return;}if(navigator.share){navigator.share({title:title,text:textMsg}).catch(()=>{});return;}if(navigator.clipboard){navigator.clipboard.writeText(textMsg).then(()=>alert('بل کا متن کاپی ہوگیا۔ WhatsApp یا SMS میں پیسٹ کریں۔')).catch(()=>prompt('بل کا متن کاپی کریں:',textMsg));return;}prompt('بل کا متن کاپی کریں:',textMsg);}
